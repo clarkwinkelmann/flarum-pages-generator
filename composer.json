@@ -1,0 +1,26 @@
+{
+    "name": "clarkwinkelmann/flarum-pages-generator",
+    "description": "Generate pseudo-static pages from markdown and HTML files for Flarum",
+    "keywords": [
+        "flarum",
+        "pages"
+    ],
+    "license": "MIT",
+    "require": {
+        "flarum/core": "^1.0",
+        "spatie/yaml-front-matter": "^2.0"
+    },
+    "authors": [
+        {
+            "name": "Clark Winkelmann",
+            "email": "clark.winkelmann@gmail.com",
+            "homepage": "https://clarkwinkelmann.com/",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "ClarkWinkelmann\\PagesGenerator\\": "src/"
+        }
+    }
+}
