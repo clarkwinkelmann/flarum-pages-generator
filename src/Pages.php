@@ -43,7 +43,10 @@ class Pages implements ExtenderInterface
             });
 
         foreach ($pages->all() as $page) {
-            $frontend->route($page->path, 'generated-route.' . $page->id);
+            $frontend->route($page->path, 'generated-route.' . $page->id, function (Document $document) use ($page) {
+                $document->title = $page->title;
+                $document->content = implode("\n\n", $page->content);
+            });
         }
 
         $frontend->extend($container, $extension);
