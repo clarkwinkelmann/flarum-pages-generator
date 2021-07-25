@@ -44,7 +44,17 @@ export default class Page extends BasePage {
 
         return m('.container', [
             m('h1', this.page.title()),
-            this.page.content().map((html: string) => m.trust(html)),
+            this.page.content().map(content => {
+                switch (content.type) {
+                    case 'html':
+                        return m.trust(content.body);
+                    case 'mithril':
+                        // TODO: make it work without eval so we can use CSP
+                        return m(eval(content.component), content.attrs);
+                }
+
+                return null;
+            }),
         ]);
     }
 }

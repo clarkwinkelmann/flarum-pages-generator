@@ -12,7 +12,7 @@ class PageRepository
 {
     protected $pages = [];
 
-    public function loadPath(string $path)
+    public function loadPath(string $path, array $components)
     {
         /**
          * @var Filesystem $files
@@ -45,17 +45,75 @@ class PageRepository
 
                 $xml = $formatter->parse($object->body());
 
-                $page->content = [
-                    $formatter->render($xml),
-                ];
+                $page->content = $this->parseComponents($formatter->render($xml), $components);
             } else {
-                $page->content = [
-                    $object->body(),
-                ];
+                $page->content = $this->parseComponents($object->body(), $components);
             }
 
             $this->pages[$url] = $page;
         }
+    }
+
+    protected function parseComponents(string $html, array $components): array
+    {
+        $content = [];
+
+        foreach (explode("\n", $html) as $line) {
+            $mithril = $this->parseLine($line, $components);
+
+            if ($mithril) {
+                $content[] = $mithril;
+
+                continue;
+            }
+
+            if (count($content) && $content[count($content) - 1]['type'] === 'html') {
+                $content[count($content) - 1]['body'] .= "\n" . $line;
+            } else {
+                $content[] = [
+                    'type' => 'html',
+                    'body' => $line,
+                ];
+            }
+        }
+
+        return $content;
+    }
+
+    protected function parseLine(string $line, array $components): ?array
+    {
+        $line = str_replace([
+            '&lt;',
+            '&gt;',
+        ], [
+            '<',
+            '>',
+        ], $line);
+
+        // Accept optional <p></p> around. This happens when inside markdown
+        if (preg_match('~^\s*(?:<p>)?\s*<([a-zA-Z0-9_-]+)\s*(?:([a-zA-Z0-9]+)="([^"]+)")?\s*/?>\s*(?:</([a-zA-Z0-9_-]+)>)?\s*(?:</p>)?\s*$~', $line, $matches) !== 1) {
+            return null;
+        }
+
+        $import = Arr::get($components, $matches[1]);
+
+        // If it's not a registered Mithril component, skip
+        if (!$import) {
+            return null;
+        }
+
+        // If closing tag is different from opening tag, skip
+        if ($matches[4] && $matches[4] !== $matches[1]) {
+            return null;
+        }
+
+        return [
+            'type' => 'mithril',
+            'component' => $import,
+            'attrs' => $matches[2] ? [
+                $matches[2] => $matches[3],
+            ] : [],
+        ];
     }
 
     /**
